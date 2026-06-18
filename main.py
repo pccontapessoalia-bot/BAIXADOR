@@ -12,6 +12,7 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.clock import mainthread
 from kivy.core.window import Window
 from kivy.utils import rgba
+from kivy.metrics import dp, sp
 from kivy.graphics import Color, Rectangle
 
 from downloader import Downloader
@@ -36,10 +37,10 @@ class RoundedInput(TextInput):
         kwargs.setdefault('background_color', rgba('#262630'))
         kwargs.setdefault('foreground_color', (1, 1, 1, 1))
         kwargs.setdefault('hint_text_color', rgba('#666680'))
-        kwargs.setdefault('padding', [15, 15])
-        kwargs.setdefault('font_size', 14)
+        kwargs.setdefault('padding', [dp(15), dp(15)])
+        kwargs.setdefault('font_size', sp(15))
         kwargs.setdefault('cursor_color', (1, 1, 1, 1))
-        kwargs.setdefault('border', [12, 12, 12, 12])
+        kwargs.setdefault('border', [dp(12), dp(12), dp(12), dp(12)])
         super().__init__(**kwargs)
 
 
@@ -50,10 +51,10 @@ class RoundedButton(Button):
         kwargs.setdefault('background_normal', '')
         kwargs.setdefault('background_down', '')
         kwargs.setdefault('background_color', bg)
-        kwargs.setdefault('font_size', 17)
+        kwargs.setdefault('font_size', sp(18))
         kwargs.setdefault('bold', True)
         kwargs.setdefault('color', (1, 1, 1, 1))
-        kwargs.setdefault('border', [12, 12, 12, 12])
+        kwargs.setdefault('border', [dp(12), dp(12), dp(12), dp(12)])
         super().__init__(**kwargs)
         self._bg = bg
         self._bg_down = bg_down
@@ -70,10 +71,10 @@ class Chip(ToggleButton):
         kwargs.setdefault('background_normal', '')
         kwargs.setdefault('background_down', '')
         kwargs.setdefault('color', rgba('#AAAABB'))
-        kwargs.setdefault('font_size', 13)
+        kwargs.setdefault('font_size', sp(13))
         kwargs.setdefault('size_hint_x', None)
-        kwargs.setdefault('width', 75)
-        kwargs.setdefault('border', [20, 20, 20, 20])
+        kwargs.setdefault('width', dp(80))
+        kwargs.setdefault('border', [dp(20), dp(20), dp(20), dp(20)])
         super().__init__(**kwargs)
 
     def on_state(self, *args):
@@ -90,7 +91,7 @@ class LogArea(ScrollView):
         super().__init__(**kwargs)
         self.log_label = Label(
             text='', size_hint_y=None, halign='left', valign='top',
-            text_size=(Window.width * 0.85, None), font_size=12,
+            text_size=(Window.width * 0.85, None), font_size=sp(12),
             color=(0.7, 0.7, 0.7, 1)
         )
         self.add_widget(self.log_label)
@@ -116,39 +117,41 @@ class MainLayout(BoxLayout):
         self._build_ui()
 
     def _build_ui(self):
-        header = BoxLayout(size_hint_y=0.1, padding=[20, 10])
+        header = BoxLayout(size_hint_y=0.1, padding=[dp(20), dp(10)])
         with header.canvas.before:
             Color(0.12, 0.12, 0.16, 1)
             self.header_rect = Rectangle(size=header.size, pos=header.pos)
         header.bind(pos=self._update_header, size=self._update_header)
-        hlabel = Label(text='Baixador de Links', font_size=20, bold=True, color=(1, 1, 1, 1))
+        hlabel = Label(
+            text='Baixador de Links', font_size=sp(22), bold=True, color=(1, 1, 1, 1)
+        )
         header.add_widget(hlabel)
         self.add_widget(header)
 
-        body = BoxLayout(orientation='vertical', spacing=15, padding=[20, 15])
+        body = BoxLayout(orientation='vertical', spacing=dp(15), padding=[dp(20), dp(15)])
         self.add_widget(body)
 
         body.add_widget(Label(
-            text='Cole o link do video', font_size=14,
-            color=(0.6, 0.6, 0.7, 1), size_hint_y=None, height=20, halign='left'
+            text='Cole o link do video', font_size=sp(14),
+            color=(0.6, 0.6, 0.7, 1), size_hint_y=None, height=dp(22), halign='left'
         ))
 
         self.url_input = RoundedInput(
             hint_text='https://youtube.com/...', multiline=False,
-            size_hint_y=None, height=50
+            size_hint_y=None, height=dp(52)
         )
         body.add_widget(self.url_input)
 
-        self.download_btn = RoundedButton(text='Baixar', size_hint_y=None, height=52)
+        self.download_btn = RoundedButton(text='Baixar', size_hint_y=None, height=dp(54))
         self.download_btn.bind(on_press=self.start_download)
         body.add_widget(self.download_btn)
 
         body.add_widget(Label(
-            text='Formato', font_size=13,
-            color=(0.6, 0.6, 0.7, 1), size_hint_y=None, height=18, halign='left'
+            text='Formato', font_size=sp(13),
+            color=(0.6, 0.6, 0.7, 1), size_hint_y=None, height=dp(20), halign='left'
         ))
 
-        chips = BoxLayout(size_hint_y=None, height=44, spacing=8)
+        chips = BoxLayout(size_hint_y=None, height=dp(44), spacing=dp(8))
         self.format_chips = {}
         for fmt in ['MP4', 'MP3']:
             chip = Chip(text=fmt, group='format')
@@ -161,18 +164,18 @@ class MainLayout(BoxLayout):
         chips.add_widget(Label(size_hint_x=1))
         body.add_widget(chips)
 
-        self.quality_box = BoxLayout(size_hint_y=None, height=40, spacing=6)
+        self.quality_box = BoxLayout(size_hint_y=None, height=dp(44), spacing=dp(8))
         self._build_quality_chips(is_audio=False)
         body.add_widget(self.quality_box)
 
         body.add_widget(BoxLayout(size_hint_y=0.02))
 
-        self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=6)
+        self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=dp(6))
         body.add_widget(self.progress_bar)
 
         self.status_label = Label(
-            text='Pronto para baixar', font_size=12,
-            color=(0.5, 0.5, 0.6, 1), size_hint_y=None, height=18
+            text='Pronto para baixar', font_size=sp(13),
+            color=(0.5, 0.5, 0.6, 1), size_hint_y=None, height=dp(20)
         )
         body.add_widget(self.status_label)
 
