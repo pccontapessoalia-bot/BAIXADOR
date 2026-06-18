@@ -429,8 +429,12 @@ class MainLayout(BoxLayout):
 
 
 class BaixadorApp(App):
+    icon_path = 'icon.png'
+
     def build(self):
         self.title = 'Baixador de Links'
+        from kivy.core.window import Window
+        Window.set_icon('icon.png')
         return MainLayout()
 
 
