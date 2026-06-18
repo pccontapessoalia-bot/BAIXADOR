@@ -6,7 +6,6 @@ package.domain = org.baixador
 source.dir = .
 source.include_exts = py,png,jpg,jpeg,gif,svg,ttf
 version = 1.0
-version.regex =
 version.name = 1.0
 version.code = 1
 requirements = python3,kivy,yt-dlp,plyer,requests,certifi
