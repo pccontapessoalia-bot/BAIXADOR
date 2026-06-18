@@ -196,7 +196,7 @@ class MainLayout(BoxLayout):
         self.add_widget(scroll)
 
         card = Card(orientation='vertical', spacing=dp(12), padding=dp(16),
-                     size_hint_y=None, height=dp(160))
+                     size_hint_y=None)
         card.add_widget(SectionLabel(text='Cole o link do video'))
         self.url_input = RoundedInput(hint_text='https://youtube.com/...', multiline=False)
         card.add_widget(self.url_input)
@@ -206,7 +206,7 @@ class MainLayout(BoxLayout):
         body.add_widget(card)
 
         card2 = Card(orientation='vertical', spacing=dp(12), padding=dp(16),
-                      size_hint_y=None, height=dp(120))
+                      size_hint_y=None)
         card2.add_widget(SectionLabel(text='Formato'))
         chips_row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
         self.format_chips = {}
@@ -226,7 +226,7 @@ class MainLayout(BoxLayout):
         body.add_widget(card2)
 
         card3 = Card(orientation='vertical', spacing=dp(8), padding=dp(16),
-                      size_hint_y=None, height=dp(80))
+                      size_hint_y=None)
         self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=dp(4))
         card3.add_widget(self.progress_bar)
         self.status_label = Label(
