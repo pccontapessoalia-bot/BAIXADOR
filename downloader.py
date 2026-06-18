@@ -2,16 +2,16 @@ import yt_dlp
 import os
 import re
 
-_FFMPEG_PATH = "ffmpeg"
+_FFMPEG_PATH = None
 
-try:
-    import imageio_ffmpeg
-    _FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-except Exception:
-    for candidate in ["/system/bin/ffmpeg", "/data/data/org.baixador/files/ffmpeg"]:
-        if os.path.exists(candidate):
-            _FFMPEG_PATH = candidate
-            break
+for candidate in ["ffmpeg", "/system/bin/ffmpeg", "/data/data/org.baixador/files/ffmpeg"]:
+    try:
+        import subprocess
+        subprocess.run([candidate, '-version'], capture_output=True)
+        _FFMPEG_PATH = candidate
+        break
+    except Exception:
+        continue
 
 def sanitize_filename(title):
     return re.sub(r'[<>:"/\\|?*]', '_', title)
@@ -59,14 +59,18 @@ class Downloader:
         is_audio = "áudio" in format_choice.lower() or "mp3" in format_choice.lower()
         aq = AUDIO_QUALITY_MAP.get(audio_quality, "192")
 
+        os.makedirs(output_path, exist_ok=True)
+        outtmpl = os.path.join(output_path, '%(title)s.%(ext)s').replace('\\', '/')
+
         ydl_opts = {
             'format': fmt,
-            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+            'outtmpl': outtmpl,
             'progress_hooks': [self.progress_hook],
             'quiet': True,
             'no_warnings': True,
-            'ffmpeg_location': _FFMPEG_PATH,
         }
+        if _FFMPEG_PATH:
+            ydl_opts['ffmpeg_location'] = _FFMPEG_PATH
 
         if is_audio:
             ydl_opts['postprocessors'] = [{
@@ -74,6 +78,7 @@ class Downloader:
                 'preferredcodec': 'mp3',
                 'preferredquality': aq,
             }]
+            ydl_opts['postprocessor_args'] = ['-ar', '44100']
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -82,6 +87,11 @@ class Downloader:
                 ext = 'mp3' if is_audio else 'mp4'
                 filename = f"{sanitize_filename(title)}.{ext}"
                 filepath = os.path.join(output_path, filename)
+                if not os.path.exists(filepath):
+                    import glob
+                    files = glob.glob(os.path.join(output_path, '*'))
+                    if files:
+                        filepath = sorted(files, key=os.path.getmtime)[-1]
                 return True, filepath, title
         except Exception as e:
             return False, str(e), None
