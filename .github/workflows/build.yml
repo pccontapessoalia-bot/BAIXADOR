@@ -13,7 +13,7 @@ jobs:
 
       - name: Build with Docker
         run: |
-          echo "y" | docker run --rm -i \
+          yes | docker run --rm -i \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             kivy/buildozer:latest \
