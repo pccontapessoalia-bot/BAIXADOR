@@ -186,17 +186,13 @@ class MainLayout(BoxLayout):
     def _build_ui(self):
         self.add_widget(Header())
 
-        scroll = ScrollView()
         body = BoxLayout(
-            orientation='vertical', spacing=dp(16), padding=[dp(20), dp(16), dp(20), dp(20)],
-            size_hint_y=None
+            orientation='vertical', spacing=dp(12), padding=[dp(20), dp(12), dp(20), dp(12)]
         )
-        body.bind(minimum_height=body.setter('height'))
-        scroll.add_widget(body)
-        self.add_widget(scroll)
+        self.add_widget(body)
 
-        card = Card(orientation='vertical', spacing=dp(12), padding=dp(16),
-                     size_hint_y=None, height=dp(190))
+        card = Card(orientation='vertical', spacing=dp(10), padding=dp(16),
+                     size_hint_y=None, height=dp(180))
         card.add_widget(SectionLabel(text='Cole o link do video'))
         self.url_input = RoundedInput(hint_text='https://youtube.com/...', multiline=False)
         card.add_widget(self.url_input)
@@ -205,8 +201,8 @@ class MainLayout(BoxLayout):
         card.add_widget(self.download_btn)
         body.add_widget(card)
 
-        card2 = Card(orientation='vertical', spacing=dp(12), padding=dp(16),
-                      size_hint_y=None, height=dp(150))
+        card2 = Card(orientation='vertical', spacing=dp(8), padding=dp(16),
+                      size_hint_y=None, height=dp(130))
         card2.add_widget(SectionLabel(text='Formato'))
         chips_row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
         self.format_chips = {}
@@ -225,8 +221,8 @@ class MainLayout(BoxLayout):
         card2.add_widget(self.quality_box)
         body.add_widget(card2)
 
-        card3 = Card(orientation='vertical', spacing=dp(8), padding=dp(16),
-                      size_hint_y=None, height=dp(70))
+        card3 = Card(orientation='vertical', spacing=dp(6), padding=[dp(16), dp(12)],
+                      size_hint_y=None, height=dp(60))
         self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=dp(4))
         card3.add_widget(self.progress_bar)
         self.status_label = Label(
@@ -237,10 +233,8 @@ class MainLayout(BoxLayout):
         body.add_widget(card3)
 
         body.add_widget(SectionLabel(text='Log'))
-        self.log_area = LogArea(size_hint_y=None, height=dp(120))
+        self.log_area = LogArea()
         body.add_widget(self.log_area)
-
-        body.add_widget(Widget(size_hint_y=None, height=dp(20)))
 
     def _build_quality_chips(self, is_audio=False):
         self.quality_box.clear_widgets()
