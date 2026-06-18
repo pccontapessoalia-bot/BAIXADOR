@@ -13,11 +13,11 @@ jobs:
 
       - name: Build with Docker
         run: |
-          yes | docker run --rm -i \
+          docker run --rm -i \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             kivy/buildozer:latest \
-            android debug 2>&1
+            bash -c "pip install --upgrade buildozer cython && yes | buildozer android debug 2>&1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
