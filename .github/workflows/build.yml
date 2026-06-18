@@ -8,15 +8,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    container:
-      image: kivy/buildozer:latest
-      options: --user root
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-17-jdk-headless python3-pip git zip unzip autoconf libtool pkg-config zlib1g-dev libffi-dev libssl-dev cmake
+
+      - name: Install Buildozer
+        run: |
+          python3 -m pip install --user buildozer cython
+
       - name: Build APK
         run: |
-          yes | buildozer android debug
+          ~/.local/bin/buildozer android debug 2>&1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
