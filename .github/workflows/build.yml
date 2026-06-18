@@ -16,8 +16,9 @@ jobs:
           docker run --rm -i \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
+            --entrypoint /bin/bash \
             kivy/buildozer:latest \
-            bash -lc "rm -rf bin .buildozer && pip install --upgrade buildozer cython Pillow && printf 'y\n' | buildozer android debug 2>&1"
+            -lc "rm -rf bin .buildozer && pip install --upgrade buildozer cython Pillow && printf 'y\n' | buildozer android debug 2>&1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
