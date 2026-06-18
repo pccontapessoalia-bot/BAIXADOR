@@ -219,8 +219,12 @@ class MainLayout(BoxLayout):
         self.format_chips['MP3'].on_state()
         chips_row.add_widget(Widget())
         card2.add_widget(chips_row)
+
         self.quality_box = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
-        self._build_quality_chips(is_audio=False)
+        self.quality_chips = {}
+        self._add_chip_group('video', ['Melhor', '1080p', '720p', '480p'], 'Melhor')
+        self._add_chip_group('audio', ['320kbps', '192kbps', '128kbps'], '192kbps')
+        self.audio_row.opacity = 0
         card2.add_widget(self.quality_box)
         body.add_widget(card2)
 
@@ -239,27 +243,18 @@ class MainLayout(BoxLayout):
         self.log_area = LogArea()
         body.add_widget(self.log_area)
 
-    def _build_quality_chips(self, is_audio=False):
-        self.quality_box.clear_widgets()
-        self.quality_chips = {}
-        if is_audio:
-            items = ['320kbps', '192kbps', '128kbps']
-            default = '192kbps'
-        else:
-            items = ['Melhor', '1080p', '720p', '480p']
-            default = 'Melhor'
+    def _add_chip_group(self, name, items, default):
+        row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
         for q in items:
             chip = Chip(text=q, group='quality')
             chip.bind(on_press=self.on_quality_chip)
-            self.quality_box.add_widget(chip)
+            row.add_widget(chip)
             self.quality_chips[q] = chip
-        self.chip_set_default(default)
-        self.quality_box.add_widget(Widget())
-
-    def chip_set_default(self, default):
-        for name, chip in self.quality_chips.items():
-            chip.state = 'down' if name == default else 'normal'
+            chip.state = 'down' if q == default else 'normal'
             chip.on_state()
+        row.add_widget(Widget())
+        setattr(self, f'{name}_row', row)
+        self.quality_box.add_widget(row)
 
     def get_format_string(self):
         quality_map = {'Melhor': 'best', '1080p': '1080p', '720p': '720p', '480p': '480p'}
@@ -286,7 +281,17 @@ class MainLayout(BoxLayout):
         for name, chip in self.format_chips.items():
             chip.state = 'down' if chip == instance else 'normal'
             chip.on_state()
-        self._build_quality_chips(is_audio=is_mp3)
+        show = self.audio_row if is_mp3 else self.video_row
+        hide = self.video_row if is_mp3 else self.audio_row
+        for child in hide.children:
+            if isinstance(child, Chip):
+                child.disabled = True
+        for child in show.children:
+            if isinstance(child, Chip):
+                child.disabled = False
+        Animation(opacity=0, d=0.12).start(hide)
+        anim = Animation(opacity=1, d=0.15, t='out_quad')
+        anim.start(show)
 
     def on_quality_chip(self, instance):
         for name, chip in self.quality_chips.items():
