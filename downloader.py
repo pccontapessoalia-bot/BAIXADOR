@@ -7,9 +7,10 @@ _FFMPEG_PATH = None
 for candidate in ["ffmpeg", "/system/bin/ffmpeg", "/data/data/org.baixador/files/ffmpeg"]:
     try:
         import subprocess
-        subprocess.run([candidate, '-version'], capture_output=True)
-        _FFMPEG_PATH = candidate
-        break
+        r = subprocess.run([candidate, '-version'], capture_output=True, timeout=5)
+        if r.returncode == 0:
+            _FFMPEG_PATH = candidate
+            break
     except Exception:
         continue
 
@@ -74,17 +75,13 @@ class Downloader:
             ydl_opts['ffmpeg_location'] = _FFMPEG_PATH
 
         if is_audio:
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': aq,
-            }]
+            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 title = info.get('title', 'desconhecido')
-                ext = 'mp3' if is_audio else 'mp4'
+                ext = 'm4a' if is_audio else 'mp4'
                 filename = f"{sanitize_filename(title)}.{ext}"
                 filepath = os.path.join(output_path, filename)
                 if not os.path.exists(filepath):
