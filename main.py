@@ -15,29 +15,18 @@ from kivy.core.window import Window
 from kivy.graphics import Color, RoundedRectangle, Rectangle
 
 from downloader import Downloader
+from storage import get_download_path, scan_file
 
 try:
     from android.permissions import request_permissions, Permission
-    request_permissions([Permission.WRITE_EXTERNAL_STORAGE, Permission.READ_EXTERNAL_STORAGE])
+    request_permissions([
+        Permission.WRITE_EXTERNAL_STORAGE,
+        Permission.READ_EXTERNAL_STORAGE,
+        Permission.READ_MEDIA_VIDEO,
+        Permission.READ_MEDIA_AUDIO,
+    ])
 except ImportError:
     pass
-
-
-def get_download_dir():
-    try:
-        from android.os import Environment
-        path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if path:
-            return str(path)
-    except Exception:
-        pass
-    try:
-        path = os.path.join(os.getenv('EXTERNAL_STORAGE', '/sdcard'), 'Download')
-        if os.path.exists(path) or os.path.exists('/sdcard'):
-            return path
-    except Exception:
-        pass
-    return os.path.join(os.path.expanduser('~'), 'Downloads')
 
 
 class RoundedInput(TextInput):
@@ -127,7 +116,7 @@ class LogArea(ScrollView):
 class MainLayout(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', spacing=0, padding=0, **kwargs)
-        self.download_dir = get_download_dir()
+        self.download_dir = os.path.expanduser('~')
         self.downloader = Downloader(
             progress_callback=self.on_progress,
             status_callback=self.on_status
@@ -288,9 +277,12 @@ class MainLayout(BoxLayout):
 
     def _do_download(self, url):
         fmt = self.get_format_string()
+        is_audio = 'MP3' in fmt or 'áudio' in fmt.lower()
+        output_path = get_download_path(is_audio=is_audio)
         try:
-            success, result, title = self.downloader.download(url, self.download_dir, fmt)
+            success, result, title = self.downloader.download(url, output_path, fmt)
             if success:
+                scan_file(result)
                 self.on_success(result, title)
             else:
                 self.on_error(result)
