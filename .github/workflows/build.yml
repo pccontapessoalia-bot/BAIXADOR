@@ -7,29 +7,33 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
-      - name: Install Buildozer dependencies
+      - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool \
-            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev \
-            libssl-dev libltdl-dev liblzma-dev
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            git zip unzip \
+            openjdk-17-jdk \
+            python3-pip \
+            autoconf libtool pkg-config \
+            zlib1g-dev libffi-dev libssl-dev \
+            cmake
 
       - name: Install Buildozer
-        run: pip install buildozer cython
+        run: pip install --user buildozer cython
 
       - name: Build APK
         run: |
-          export PATH=$PATH:~/.local/bin/
-          buildozer android debug
+          export PATH=$PATH:~/.local/bin
+          yes | buildozer android debug 2>&1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
