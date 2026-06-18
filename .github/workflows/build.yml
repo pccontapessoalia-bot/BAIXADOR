@@ -9,15 +9,15 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Debug - list files
         run: ls -la
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -30,10 +30,11 @@ jobs:
 
       - name: Build APK
         run: |
+          ls -la
           ~/.local/bin/buildozer android debug 2>&1
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Baixador-de-Links-APK
           path: bin/*.apk
