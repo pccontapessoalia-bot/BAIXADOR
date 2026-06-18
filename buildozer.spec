@@ -13,7 +13,7 @@ orientation = portrait
 osx.package_name = Baixador de Links
 presplash.color = #7C5CFC
 presplash = presplash.png
-icon = icon.png
+icon = app_icon.png
 
 [buildozer]
 
