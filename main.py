@@ -10,6 +10,7 @@ from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.widget import Widget
+from kivy.uix.floatlayout import FloatLayout
 from kivy.clock import mainthread
 from kivy.core.window import Window
 from kivy.utils import rgba
@@ -220,7 +221,7 @@ class MainLayout(BoxLayout):
         chips_row.add_widget(Widget())
         card2.add_widget(chips_row)
 
-        self.quality_box = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
+        self.quality_box = FloatLayout(size_hint_y=None, height=dp(36))
         self.quality_chips = {}
         self._add_chip_group('video', ['Melhor', '1080p', '720p', '480p'], 'Melhor')
         self._add_chip_group('audio', ['320kbps', '192kbps', '128kbps'], '192kbps')
@@ -244,9 +245,10 @@ class MainLayout(BoxLayout):
         body.add_widget(self.log_area)
 
     def _add_chip_group(self, name, items, default):
-        row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
+        group_name = f'{name}_quality'
+        row = BoxLayout(size_hint=(1, 1), spacing=dp(8), pos_hint={'x': 0, 'y': 0})
         for q in items:
-            chip = Chip(text=q, group='quality')
+            chip = Chip(text=q, group=group_name)
             chip.bind(on_press=self.on_quality_chip)
             row.add_widget(chip)
             self.quality_chips[q] = chip
