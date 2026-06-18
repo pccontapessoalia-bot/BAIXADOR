@@ -34,4 +34,4 @@ android.enable_androidx = True
 android.storage = auto
 android.accept_sdk_license = True
 android.gradle_dependencies = androidx.core:core:1.9.0
-android.adaptive_icon = True
+
