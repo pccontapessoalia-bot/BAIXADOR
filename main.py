@@ -32,21 +32,28 @@ except ImportError:
     pass
 
 BG = rgba('#0A0A0F')
-SURFACE = rgba('#16161E')
+SURFACE = rgba('#14141E')
 SURFACE2 = rgba('#1E1E2A')
 PRIMARY = rgba('#7C5CFC')
+PRIMARY_GLOW = rgba('#7C5CFC40')
 PRIMARY_DARK = rgba('#5A3FD6')
+PINK = rgba('#FF6B9D')
 TEXT = rgba('#FFFFFF')
 TEXT2 = rgba('#8B8BA3')
 TEXT3 = rgba('#5A5A72')
+SHADOW = rgba('#00000030')
 
 Window.clearcolor = BG
 
 
-class Card(BoxLayout):
+class ShadowCard(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         with self.canvas.before:
+            Color(*SHADOW)
+            self.shadow = RoundedRectangle(
+                size=self.size, pos=self.pos, radius=[dp(16)]
+            )
             Color(*SURFACE)
             self.rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[dp(16)])
         self.bind(pos=self._update, size=self._update)
@@ -54,6 +61,8 @@ class Card(BoxLayout):
     def _update(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+        self.shadow.pos = (self.pos[0] + dp(2), self.pos[1] - dp(2))
+        self.shadow.size = self.size
 
 
 class RoundedInput(TextInput):
@@ -61,16 +70,27 @@ class RoundedInput(TextInput):
         kwargs.setdefault('background_color', SURFACE2)
         kwargs.setdefault('foreground_color', TEXT)
         kwargs.setdefault('hint_text_color', TEXT3)
-        kwargs.setdefault('padding', [dp(16), dp(16)])
+        kwargs.setdefault('padding', [dp(16), dp(16), dp(16), dp(20)])
         kwargs.setdefault('font_size', sp(15))
         kwargs.setdefault('cursor_color', PRIMARY)
         kwargs.setdefault('border', [dp(14), dp(14), dp(14), dp(14)])
         kwargs.setdefault('size_hint_y', None)
         kwargs.setdefault('height', dp(52))
         super().__init__(**kwargs)
+        with self.canvas.after:
+            Color(*PRIMARY_GLOW)
+            self.accent = RoundedRectangle(
+                size=(self.width, dp(2)), pos=(self.x, self.y + dp(2)),
+                radius=[dp(1)]
+            )
+        self.bind(pos=self._update_accent, size=self._update_accent)
+
+    def _update_accent(self, *args):
+        self.accent.size = (self.width - dp(4), dp(2))
+        self.accent.pos = (self.x + dp(2), self.y + dp(2))
 
 
-class PrimaryButton(Button):
+class GlowButton(Button):
     def __init__(self, **kwargs):
         kwargs.setdefault('background_normal', '')
         kwargs.setdefault('background_down', '')
@@ -78,17 +98,42 @@ class PrimaryButton(Button):
         kwargs.setdefault('font_size', sp(16))
         kwargs.setdefault('bold', True)
         kwargs.setdefault('color', TEXT)
-        kwargs.setdefault('border', [dp(14), dp(14), dp(14), dp(14)])
+        kwargs.setdefault('border', [dp(16), dp(16), dp(16), dp(16)])
         kwargs.setdefault('size_hint_y', None)
         kwargs.setdefault('height', dp(54))
         super().__init__(**kwargs)
         self._bg = PRIMARY
         self._bg_down = PRIMARY_DARK
+        with self.canvas.after:
+            Color(*PRIMARY_GLOW)
+            self.glow = RoundedRectangle(
+                size=(self.width + dp(8), self.height + dp(8)),
+                pos=(self.x - dp(4), self.y - dp(4)),
+                radius=[dp(20)]
+            )
+        self.bind(pos=self._update_glow, size=self._update_glow)
+
+    def _update_glow(self, *args):
+        self.glow.size = (self.width + dp(8), self.height + dp(8))
+        self.glow.pos = (self.x - dp(4), self.y - dp(4))
 
     def on_state(self, *args):
         target = self._bg_down if self.state == 'down' else self._bg
-        anim = Animation(background_color=target, d=0.15, t='out_quad')
+        anim = Animation(background_color=target, d=0.18, t='out_quad')
         anim.start(self)
+        if self.state == 'down':
+            g_anim = Animation(
+                size=(self.width + dp(16), self.height + dp(16)),
+                pos=(self.x - dp(8), self.y - dp(8)),
+                d=0.18, t='out_quad'
+            )
+        else:
+            g_anim = Animation(
+                size=(self.width + dp(8), self.height + dp(8)),
+                pos=(self.x - dp(4), self.y - dp(4)),
+                d=0.25, t='out_back'
+            )
+        g_anim.start(self.glow)
 
 
 class Chip(ToggleButton):
@@ -102,14 +147,22 @@ class Chip(ToggleButton):
         kwargs.setdefault('width', dp(80))
         kwargs.setdefault('border', [dp(18), dp(18), dp(18), dp(18)])
         super().__init__(**kwargs)
-        self._animating = False
 
     def on_state(self, *args):
         if self.state == 'down':
-            anim = Animation(background_color=PRIMARY, color=TEXT, d=0.15, t='out_back')
+            anim = Animation(
+                background_color=PRIMARY, color=TEXT, d=0.2, t='out_back'
+            )
         else:
-            anim = Animation(background_color=SURFACE2, color=TEXT2, d=0.12, t='out_quad')
+            anim = Animation(
+                background_color=SURFACE2, color=TEXT2, d=0.15, t='out_quad'
+            )
         anim.start(self)
+
+
+class ChipGroup(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(size_hint_y=None, height=dp(36), spacing=dp(8), **kwargs)
 
 
 class LogArea(ScrollView):
@@ -123,12 +176,20 @@ class LogArea(ScrollView):
         self.add_widget(self.log_label)
         with self.canvas.before:
             Color(*SURFACE)
+            Color(0, 0, 0, 0.15)
+            self.shadow = RoundedRectangle(
+                size=self.size, pos=(self.x, self.y - dp(2)),
+                radius=[dp(12)]
+            )
+            Color(*SURFACE)
             self.rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[dp(12)])
         self.bind(pos=self._update, size=self._update)
 
     def _update(self, *args):
         self.rect.pos = self.pos
         self.rect.size = self.size
+        self.shadow.pos = (self.pos[0], self.pos[1] - dp(2))
+        self.shadow.size = self.size
 
     @mainthread
     def append(self, text):
@@ -148,14 +209,14 @@ class Header(BoxLayout):
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.bind(pos=self._update, size=self._update)
         label = Label(
-            text='Baixador de Links', font_size=sp(22), bold=True, color=TEXT,
-            size_hint_x=0.7, halign='left', valign='middle'
+            text='Baixador', font_size=sp(24), bold=True, color=TEXT,
+            size_hint_x=0.5, halign='left', valign='middle'
         )
         label.bind(size=label.setter('text_size'))
         self.add_widget(label)
         subtitle = Label(
-            text='YouTube, Instagram, TikTok', font_size=sp(11), color=rgba('#FFFFFFAA'),
-            size_hint_x=0.3, halign='right', valign='middle'
+            text='YouTube, Instagram, TikTok', font_size=sp(10), color=rgba('#FFFFFFAA'),
+            size_hint_x=0.5, halign='right', valign='middle'
         )
         subtitle.bind(size=subtitle.setter('text_size'))
         self.add_widget(subtitle)
@@ -167,12 +228,20 @@ class Header(BoxLayout):
 
 class SectionLabel(Label):
     def __init__(self, **kwargs):
-        kwargs.setdefault('font_size', sp(13))
+        kwargs.setdefault('font_size', sp(11))
         kwargs.setdefault('color', TEXT3)
         kwargs.setdefault('size_hint_y', None)
-        kwargs.setdefault('height', dp(20))
+        kwargs.setdefault('height', dp(18))
         kwargs.setdefault('halign', 'left')
         kwargs.setdefault('bold', True)
+        super().__init__(**kwargs)
+
+
+class BodyBox(BoxLayout):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('orientation', 'vertical')
+        kwargs.setdefault('spacing', dp(12))
+        kwargs.setdefault('padding', [dp(20), dp(12), dp(20), dp(12)])
         super().__init__(**kwargs)
 
 
@@ -189,46 +258,46 @@ class MainLayout(BoxLayout):
     def _build_ui(self):
         self.add_widget(Header())
 
-        body = BoxLayout(
-            orientation='vertical', spacing=dp(12), padding=[dp(20), dp(12), dp(20), dp(12)]
-        )
+        body = BodyBox()
         self.add_widget(body)
 
-        card = Card(orientation='vertical', spacing=dp(10), padding=dp(16),
-                     size_hint_y=None, height=dp(180))
-        card.add_widget(SectionLabel(text='Cole o link do video'))
-        self.url_input = RoundedInput(hint_text='https://youtube.com/...', multiline=False)
-        card.add_widget(self.url_input)
-        self.download_btn = PrimaryButton(text='Baixar')
+        card1 = ShadowCard(orientation='vertical', spacing=dp(10), padding=dp(16),
+                           size_hint_y=None, height=dp(180))
+        card1.add_widget(SectionLabel(text='COLE O LINK'))
+        self.url_input = RoundedInput(
+            hint_text='https://youtube.com/...', multiline=False
+        )
+        card1.add_widget(self.url_input)
+        self.download_btn = GlowButton(text='Baixar Agora')
         self.download_btn.bind(on_press=self.start_download)
-        card.add_widget(self.download_btn)
-        body.add_widget(card)
+        card1.add_widget(self.download_btn)
+        body.add_widget(card1)
 
-        card2 = Card(orientation='vertical', spacing=dp(8), padding=dp(16),
-                      size_hint_y=None, height=dp(130))
-        card2.add_widget(SectionLabel(text='Formato'))
-        chips_row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
+        card2 = ShadowCard(orientation='vertical', spacing=dp(8), padding=dp(16),
+                           size_hint_y=None, height=dp(130))
+        card2.add_widget(SectionLabel(text='FORMATO'))
+        fmt_row = ChipGroup()
         self.format_chips = {}
         for fmt in ['MP4', 'MP3']:
             chip = Chip(text=fmt, group='format')
             chip.bind(on_press=self.on_format_chip)
-            chips_row.add_widget(chip)
+            fmt_row.add_widget(chip)
             self.format_chips[fmt] = chip
         self.format_chips['MP4'].state = 'down'
         self.format_chips['MP4'].on_state()
         self.format_chips['MP3'].on_state()
-        chips_row.add_widget(Widget())
-        card2.add_widget(chips_row)
+        fmt_row.add_widget(Widget())
+        card2.add_widget(fmt_row)
 
-        self.quality_box = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
+        self.quality_box = ChipGroup()
         self.quality_chips = {}
         self.quality_row = None
         self._add_quality_row(['Melhor', '1080p', '720p', '480p'], 'Melhor')
         card2.add_widget(self.quality_box)
         body.add_widget(card2)
 
-        card3 = Card(orientation='vertical', spacing=dp(6), padding=[dp(16), dp(12)],
-                      size_hint_y=None, height=dp(60))
+        card3 = ShadowCard(orientation='vertical', spacing=dp(6), padding=[dp(16), dp(12)],
+                           size_hint_y=None, height=dp(60))
         self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=dp(4))
         card3.add_widget(self.progress_bar)
         self.status_label = Label(
@@ -238,12 +307,12 @@ class MainLayout(BoxLayout):
         card3.add_widget(self.status_label)
         body.add_widget(card3)
 
-        body.add_widget(SectionLabel(text='Log'))
+        body.add_widget(SectionLabel(text='LOG'))
         self.log_area = LogArea()
         body.add_widget(self.log_area)
 
     def _add_quality_row(self, items, default):
-        self.quality_row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
+        self.quality_row = ChipGroup()
         for q in items:
             chip = Chip(text=q, group='quality')
             chip.bind(on_press=self.on_quality_chip)
@@ -348,7 +417,7 @@ class MainLayout(BoxLayout):
         self.log(f'OK: {title}')
         self.log(f'Arquivo salvo em: {filepath}')
         self.download_btn.disabled = False
-        self.download_btn.text = 'Baixar'
+        self.download_btn.text = 'Baixar Agora'
 
     @mainthread
     def on_error(self, error_msg):
@@ -356,7 +425,7 @@ class MainLayout(BoxLayout):
         self.status_label.text = 'Erro no download'
         self.log(f'Erro: {error_msg}')
         self.download_btn.disabled = False
-        self.download_btn.text = 'Baixar'
+        self.download_btn.text = 'Baixar Agora'
 
 
 class BaixadorApp(App):
