@@ -10,7 +10,6 @@ from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.widget import Widget
-from kivy.uix.floatlayout import FloatLayout
 from kivy.clock import mainthread
 from kivy.core.window import Window
 from kivy.utils import rgba
@@ -221,11 +220,10 @@ class MainLayout(BoxLayout):
         chips_row.add_widget(Widget())
         card2.add_widget(chips_row)
 
-        self.quality_box = FloatLayout(size_hint_y=None, height=dp(36))
+        self.quality_box = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
         self.quality_chips = {}
-        self._add_chip_group('video', ['Melhor', '1080p', '720p', '480p'], 'Melhor')
-        self._add_chip_group('audio', ['320kbps', '192kbps', '128kbps'], '192kbps')
-        self.audio_row.opacity = 0
+        self.quality_row = None
+        self._add_quality_row(['Melhor', '1080p', '720p', '480p'], 'Melhor')
         card2.add_widget(self.quality_box)
         body.add_widget(card2)
 
@@ -244,19 +242,30 @@ class MainLayout(BoxLayout):
         self.log_area = LogArea()
         body.add_widget(self.log_area)
 
-    def _add_chip_group(self, name, items, default):
-        group_name = f'{name}_quality'
-        row = BoxLayout(size_hint=(1, 1), spacing=dp(8), pos_hint={'x': 0, 'y': 0})
+    def _add_quality_row(self, items, default):
+        self.quality_row = BoxLayout(size_hint_y=None, height=dp(36), spacing=dp(8))
         for q in items:
-            chip = Chip(text=q, group=group_name)
+            chip = Chip(text=q, group='quality')
             chip.bind(on_press=self.on_quality_chip)
-            row.add_widget(chip)
+            self.quality_row.add_widget(chip)
             self.quality_chips[q] = chip
             chip.state = 'down' if q == default else 'normal'
             chip.on_state()
-        row.add_widget(Widget())
-        setattr(self, f'{name}_row', row)
-        self.quality_box.add_widget(row)
+        self.quality_row.add_widget(Widget())
+        self.quality_box.add_widget(self.quality_row)
+
+    def _swap_quality_row(self, items, default):
+        old_row = self.quality_row
+        anim = Animation(opacity=0, d=0.1)
+        anim.bind(on_complete=lambda *a: self._finish_quality_swap(old_row, items, default))
+        anim.start(old_row)
+
+    def _finish_quality_swap(self, old_row, items, default):
+        self.quality_box.remove_widget(old_row)
+        self.quality_chips = {}
+        self._add_quality_row(items, default)
+        self.quality_row.opacity = 0
+        Animation(opacity=1, d=0.12, t='out_quad').start(self.quality_row)
 
     def get_format_string(self):
         quality_map = {'Melhor': 'best', '1080p': '1080p', '720p': '720p', '480p': '480p'}
@@ -283,17 +292,10 @@ class MainLayout(BoxLayout):
         for name, chip in self.format_chips.items():
             chip.state = 'down' if chip == instance else 'normal'
             chip.on_state()
-        show = self.audio_row if is_mp3 else self.video_row
-        hide = self.video_row if is_mp3 else self.audio_row
-        for child in hide.children:
-            if isinstance(child, Chip):
-                child.disabled = True
-        for child in show.children:
-            if isinstance(child, Chip):
-                child.disabled = False
-        Animation(opacity=0, d=0.12).start(hide)
-        anim = Animation(opacity=1, d=0.15, t='out_quad')
-        anim.start(show)
+        if is_mp3:
+            self._swap_quality_row(['320kbps', '192kbps', '128kbps'], '192kbps')
+        else:
+            self._swap_quality_row(['Melhor', '1080p', '720p', '480p'], 'Melhor')
 
     def on_quality_chip(self, instance):
         for name, chip in self.quality_chips.items():
