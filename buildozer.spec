@@ -12,7 +12,7 @@ requirements = python3,kivy,yt-dlp,plyer,requests,certifi
 orientation = portrait
 osx.package_name = Baixador de Links
 presplash.color = #7C5CFC
-presplash = presplash.png
+presplash = app_splash.png
 icon = app_icon.png
 
 [buildozer]
