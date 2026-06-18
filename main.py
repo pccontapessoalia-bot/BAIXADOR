@@ -14,6 +14,7 @@ from kivy.clock import mainthread
 from kivy.core.window import Window
 from kivy.utils import rgba
 from kivy.metrics import dp, sp
+from kivy.animation import Animation
 from kivy.graphics import Color, RoundedRectangle, Rectangle
 
 from downloader import Downloader
@@ -85,7 +86,9 @@ class PrimaryButton(Button):
         self._bg_down = PRIMARY_DARK
 
     def on_state(self, *args):
-        self.background_color = self._bg_down if self.state == 'down' else self._bg
+        target = self._bg_down if self.state == 'down' else self._bg
+        anim = Animation(background_color=target, d=0.15, t='out_quad')
+        anim.start(self)
 
 
 class Chip(ToggleButton):
@@ -99,14 +102,14 @@ class Chip(ToggleButton):
         kwargs.setdefault('width', dp(80))
         kwargs.setdefault('border', [dp(18), dp(18), dp(18), dp(18)])
         super().__init__(**kwargs)
+        self._animating = False
 
     def on_state(self, *args):
         if self.state == 'down':
-            self.background_color = PRIMARY
-            self.color = TEXT
+            anim = Animation(background_color=PRIMARY, color=TEXT, d=0.15, t='out_back')
         else:
-            self.background_color = SURFACE2
-            self.color = TEXT2
+            anim = Animation(background_color=SURFACE2, color=TEXT2, d=0.12, t='out_quad')
+        anim.start(self)
 
 
 class LogArea(ScrollView):
