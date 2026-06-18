@@ -8,11 +8,11 @@ from kivy.uix.button import Button
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.togglebutton import ToggleButton
 from kivy.clock import mainthread
 from kivy.core.window import Window
-from kivy.graphics import Color, RoundedRectangle, Rectangle
+from kivy.utils import rgba
+from kivy.graphics import Color, Rectangle
 
 from downloader import Downloader
 from storage import get_download_path, scan_file
@@ -28,69 +28,61 @@ try:
 except ImportError:
     pass
 
+Window.clearcolor = rgba('#14141E')
+
 
 class RoundedInput(TextInput):
     def __init__(self, **kwargs):
+        kwargs.setdefault('background_color', rgba('#262630'))
+        kwargs.setdefault('foreground_color', (1, 1, 1, 1))
+        kwargs.setdefault('hint_text_color', rgba('#666680'))
+        kwargs.setdefault('padding', [15, 15])
+        kwargs.setdefault('font_size', 14)
+        kwargs.setdefault('cursor_color', (1, 1, 1, 1))
+        kwargs.setdefault('border', [12, 12, 12, 12])
         super().__init__(**kwargs)
-        self.background_normal = ''
-        self.background_active = ''
-        self.background_color = (1, 1, 1, 0)
-        with self.canvas.before:
-            Color(0.15, 0.15, 0.2, 1)
-            self.rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[12])
-        self.bind(pos=self._update_rect, size=self._update_rect)
-
-    def _update_rect(self, *args):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
 
 
 class RoundedButton(Button):
     def __init__(self, **kwargs):
+        bg = rgba('#3366FF')
+        bg_down = rgba('#2952CC')
+        kwargs.setdefault('background_normal', '')
+        kwargs.setdefault('background_down', '')
+        kwargs.setdefault('background_color', bg)
+        kwargs.setdefault('font_size', 17)
+        kwargs.setdefault('bold', True)
+        kwargs.setdefault('color', (1, 1, 1, 1))
+        kwargs.setdefault('border', [12, 12, 12, 12])
         super().__init__(**kwargs)
-        self.background_normal = ''
-        self.background_down = ''
-        with self.canvas.before:
-            Color(0.2, 0.5, 1, 1)
-            self.rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[12])
-        self.bind(pos=self._update_rect, size=self._update_rect)
+        self._bg = bg
+        self._bg_down = bg_down
 
-    def _update_rect(self, *args):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
+    def on_state(self, *args):
+        if self.state == 'down':
+            self.background_color = self._bg_down
+        else:
+            self.background_color = self._bg
 
 
 class Chip(ToggleButton):
     def __init__(self, **kwargs):
+        kwargs.setdefault('background_normal', '')
+        kwargs.setdefault('background_down', '')
+        kwargs.setdefault('color', rgba('#AAAABB'))
+        kwargs.setdefault('font_size', 13)
+        kwargs.setdefault('size_hint_x', None)
+        kwargs.setdefault('width', 75)
+        kwargs.setdefault('border', [20, 20, 20, 20])
         super().__init__(**kwargs)
-        self.background_normal = ''
-        self.background_down = ''
-        self.color = (1, 1, 1, 0.7)
-        self.font_size = 13
-        self.size_hint_y = None
-        self.height = 40
-        with self.canvas.before:
-            Color(0.15, 0.15, 0.2, 1)
-            self.rect_normal = RoundedRectangle(size=self.size, pos=self.pos, radius=[20])
-        with self.canvas.before:
-            Color(0.2, 0.5, 1, 1)
-            self.rect_down = RoundedRectangle(size=(0, 0), pos=self.pos, radius=[20])
-        self.bind(pos=self._update_rect, size=self._update_rect, state=self._update_state)
 
-    def _update_rect(self, *args):
-        self.rect_normal.pos = self.pos
-        self.rect_normal.size = self.size
-        self.rect_down.pos = self.pos
-
-    def _update_state(self, *args):
+    def on_state(self, *args):
         if self.state == 'down':
-            self.rect_down.size = self.size
-            self.rect_normal.size = (0, 0)
+            self.background_color = rgba('#3366FF')
             self.color = (1, 1, 1, 1)
         else:
-            self.rect_down.size = (0, 0)
-            self.rect_normal.size = self.size
-            self.color = (1, 1, 1, 0.7)
+            self.background_color = rgba('#262630')
+            self.color = rgba('#AAAABB')
 
 
 class LogArea(ScrollView):
@@ -124,11 +116,6 @@ class MainLayout(BoxLayout):
         self._build_ui()
 
     def _build_ui(self):
-        with self.canvas.before:
-            Color(0.08, 0.08, 0.12, 1)
-            self.bg = Rectangle(size=self.size, pos=self.pos)
-        self.bind(pos=self._update_bg, size=self._update_bg)
-
         header = BoxLayout(size_hint_y=0.1, padding=[20, 10])
         with header.canvas.before:
             Color(0.12, 0.12, 0.16, 1)
@@ -142,22 +129,17 @@ class MainLayout(BoxLayout):
         self.add_widget(body)
 
         body.add_widget(Label(
-            text='Cole o link do vídeo', font_size=14,
+            text='Cole o link do video', font_size=14,
             color=(0.6, 0.6, 0.7, 1), size_hint_y=None, height=20, halign='left'
         ))
 
         self.url_input = RoundedInput(
             hint_text='https://youtube.com/...', multiline=False,
-            size_hint_y=None, height=50, foreground_color=(1, 1, 1, 1),
-            hint_text_color=(0.4, 0.4, 0.5, 1), padding=[15, 15],
-            font_size=14
+            size_hint_y=None, height=50
         )
         body.add_widget(self.url_input)
 
-        self.download_btn = RoundedButton(
-            text='Baixar', font_size=17, bold=True,
-            size_hint_y=None, height=52, color=(1, 1, 1, 1)
-        )
+        self.download_btn = RoundedButton(text='Baixar', size_hint_y=None, height=52)
         self.download_btn.bind(on_press=self.start_download)
         body.add_widget(self.download_btn)
 
@@ -169,32 +151,23 @@ class MainLayout(BoxLayout):
         chips = BoxLayout(size_hint_y=None, height=44, spacing=8)
         self.format_chips = {}
         for fmt in ['MP4', 'MP3']:
-            chip = Chip(text=fmt, group='format', size_hint_x=None, width=70)
+            chip = Chip(text=fmt, group='format')
             chip.bind(on_press=self.on_format_chip)
             chips.add_widget(chip)
             self.format_chips[fmt] = chip
         self.format_chips['MP4'].state = 'down'
+        self.format_chips['MP4'].on_state()
+        self.format_chips['MP3'].on_state()
         chips.add_widget(Label(size_hint_x=1))
         body.add_widget(chips)
 
-        quality_box = BoxLayout(size_hint_y=None, height=40, spacing=6)
-        self.quality_chips = {}
-        for q in ['Melhor', '1080p', '720p', '480p']:
-            chip = Chip(text=q, group='quality', size_hint_x=None, width=75)
-            chip.bind(on_press=self.on_quality_chip)
-            quality_box.add_widget(chip)
-            self.quality_chips[q] = chip
-        self.quality_chips['Melhor'].state = 'down'
-        quality_box.add_widget(Label(size_hint_x=1))
-        body.add_widget(quality_box)
+        self.quality_box = BoxLayout(size_hint_y=None, height=40, spacing=6)
+        self._build_quality_chips(is_audio=False)
+        body.add_widget(self.quality_box)
 
         body.add_widget(BoxLayout(size_hint_y=0.02))
 
         self.progress_bar = ProgressBar(max=100, value=0, size_hint_y=None, height=6)
-        with self.progress_bar.canvas.before:
-            Color(0.15, 0.15, 0.2, 1)
-            self.pb_bg = RoundedRectangle(size=self.progress_bar.size, pos=self.progress_bar.pos, radius=[3])
-        self.progress_bar.bind(pos=self._update_pb, size=self._update_pb)
         body.add_widget(self.progress_bar)
 
         self.status_label = Label(
@@ -206,48 +179,64 @@ class MainLayout(BoxLayout):
         self.log_area = LogArea(size_hint_y=0.25)
         body.add_widget(self.log_area)
 
-    def _update_bg(self, *args):
-        self.bg.size = self.size
-        self.bg.pos = self.pos
-
     def _update_header(self, *args):
         if hasattr(self, 'header_rect'):
             p = self.children[-1]
             self.header_rect.size = p.size
             self.header_rect.pos = p.pos
 
-    def _update_pb(self, *args):
-        self.pb_bg.size = self.progress_bar.size
-        self.pb_bg.pos = self.progress_bar.pos
+    def _build_quality_chips(self, is_audio=False):
+        self.quality_box.clear_widgets()
+        self.quality_chips = {}
+        if is_audio:
+            items = ['320kbps', '192kbps', '128kbps']
+            default = '192kbps'
+        else:
+            items = ['Melhor', '1080p', '720p', '480p']
+            default = 'Melhor'
+        for q in items:
+            chip = Chip(text=q, group='quality')
+            chip.bind(on_press=self.on_quality_chip)
+            self.quality_box.add_widget(chip)
+            self.quality_chips[q] = chip
+        self.quality_chips[default].state = 'down'
+        for chip in self.quality_chips.values():
+            chip.on_state()
+        self.quality_box.add_widget(Label(size_hint_x=1))
 
     def get_format_string(self):
         quality_map = {'Melhor': 'best', '1080p': '1080p', '720p': '720p', '480p': '480p'}
         fmt = 'MP3' if self.format_chips['MP3'].state == 'down' else 'MP4'
+        if fmt == 'MP3':
+            return 'Melhor Audio (MP3)'
         q = 'best'
         for name, chip in self.quality_chips.items():
             if chip.state == 'down':
-                q = quality_map[name]
+                q = quality_map.get(name, 'best')
                 break
-        if fmt == 'MP3':
-            return 'Melhor Áudio (MP3)'
         if q == 'best':
-            return 'Melhor Vídeo (MP4)'
-        return f'Vídeo {q} (MP4)'
+            return 'Melhor Video (MP4)'
+        return f'Video {q} (MP4)'
+
+    def get_audio_quality(self):
+        for name, chip in self.quality_chips.items():
+            if chip.state == 'down':
+                return name
+        return '192kbps'
 
     def on_format_chip(self, instance):
         is_mp3 = instance.text == 'MP3'
         for name, chip in self.format_chips.items():
             if chip != instance:
                 chip.state = 'normal'
-        for name, chip in self.quality_chips.items():
-            chip.disabled = is_mp3
-            if is_mp3:
-                chip.state = 'normal'
+            chip.on_state()
+        self._build_quality_chips(is_audio=is_mp3)
 
     def on_quality_chip(self, instance):
         for name, chip in self.quality_chips.items():
             if chip != instance:
                 chip.state = 'normal'
+            chip.on_state()
 
     @mainthread
     def on_progress(self, value):
@@ -277,10 +266,11 @@ class MainLayout(BoxLayout):
 
     def _do_download(self, url):
         fmt = self.get_format_string()
-        is_audio = 'MP3' in fmt or 'áudio' in fmt.lower()
+        audio_q = self.get_audio_quality()
+        is_audio = 'MP3' in fmt or 'audio' in fmt.lower()
         output_path = get_download_path(is_audio=is_audio)
         try:
-            success, result, title = self.downloader.download(url, output_path, fmt)
+            success, result, title = self.downloader.download(url, output_path, fmt, audio_q)
             if success:
                 scan_file(result)
                 self.on_success(result, title)
