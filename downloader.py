@@ -68,6 +68,7 @@ class Downloader:
             'progress_hooks': [self.progress_hook],
             'quiet': True,
             'no_warnings': True,
+            'windowsfilenames': True,
         }
         if _FFMPEG_PATH:
             ydl_opts['ffmpeg_location'] = _FFMPEG_PATH
@@ -78,7 +79,6 @@ class Downloader:
                 'preferredcodec': 'mp3',
                 'preferredquality': aq,
             }]
-            ydl_opts['postprocessor_args'] = ['-ar', '44100']
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -88,10 +88,12 @@ class Downloader:
                 filename = f"{sanitize_filename(title)}.{ext}"
                 filepath = os.path.join(output_path, filename)
                 if not os.path.exists(filepath):
-                    import glob
-                    files = glob.glob(os.path.join(output_path, '*'))
+                    files = sorted(
+                        [f for f in os.listdir(output_path) if os.path.isfile(os.path.join(output_path, f))],
+                        key=lambda f: os.path.getmtime(os.path.join(output_path, f))
+                    )
                     if files:
-                        filepath = sorted(files, key=os.path.getmtime)[-1]
+                        filepath = os.path.join(output_path, files[-1])
                 return True, filepath, title
         except Exception as e:
-            return False, str(e), None
+            return False, f'{type(e).__name__}: {e}', None

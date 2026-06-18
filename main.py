@@ -399,7 +399,12 @@ class MainLayout(BoxLayout):
         fmt = self.get_format_string()
         audio_q = self.get_audio_quality()
         is_audio = 'MP3' in fmt or 'audio' in fmt.lower()
-        output_path = get_download_path(is_audio=is_audio)
+        try:
+            output_path = get_download_path(is_audio=is_audio)
+        except Exception:
+            output_path = os.path.join(os.path.dirname(__file__), 'downloads')
+        os.makedirs(output_path, exist_ok=True)
+        self.log(f'Salvando em: {output_path}')
         try:
             success, result, title = self.downloader.download(url, output_path, fmt, audio_q)
             if success:
@@ -408,7 +413,7 @@ class MainLayout(BoxLayout):
             else:
                 self.on_error(result)
         except Exception as e:
-            self.on_error(str(e))
+            self.on_error(f'{type(e).__name__}: {e}')
 
     @mainthread
     def on_success(self, filepath, title):
